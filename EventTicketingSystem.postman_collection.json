@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "Event Ticketing System",
+    "description": "APIs for the Event Ticketing System. Set collection variables: baseUrl (e.g. http://localhost:8080), token (set automatically after Login).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "bookingId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health",
+            "description": "No auth required. Returns { \"status\": \"UP\" }."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Signup",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/signup",
+            "description": "Creates a new user. No auth."
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/login",
+            "description": "Returns JWT in response. Collection variable 'token' is set automatically for use in protected requests."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events (Public)",
+      "item": [
+        {
+          "name": "Get Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/events?city=&date=",
+              "host": ["{{baseUrl}}"],
+              "path": ["events"],
+              "query": [
+                { "key": "city", "value": "", "description": "Filter by city" },
+                { "key": "date", "value": "", "description": "Filter by date" }
+              ]
+            },
+            "description": "List events. Optional query: city, date. No auth."
+          }
+        },
+        {
+          "name": "Get Event by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}",
+            "description": "Get single event. Set eventId in path or use collection variable. No auth."
+          }
+        },
+        {
+          "name": "Get Event Seats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/events/{{eventId}}/seats",
+            "description": "Returns seats with status (AVAILABLE, LOCKED, BOOKED), category, price. No auth."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Create Event (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Summer Concert 2025\",\n  \"location\": \"Central Arena\",\n  \"city\": \"Mumbai\",\n  \"date\": \"2025-06-15\",\n  \"showTimings\": [\n    { \"startTime\": \"18:00\", \"endTime\": \"21:00\" }\n  ],\n  \"seats\": [\n    { \"seatNumber\": \"A1\", \"category\": \"VIP\", \"price\": 1500 },\n    { \"seatNumber\": \"A2\", \"category\": \"VIP\", \"price\": 1500 },\n    { \"seatNumber\": \"B1\", \"category\": \"STANDARD\", \"price\": 500 }\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/events",
+            "description": "Admin only. Set ADMIN_EMAILS in env and login with that email to get admin role. Response includes _id (eventId) - save it for lock/booking calls."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking (JWT required)",
+      "item": [
+        {
+          "name": "Get Lock Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/events/{{eventId}}/lock-status",
+            "description": "Returns which seats are locked, by whom, and remaining TTL (seconds)."
+          }
+        },
+        {
+          "name": "Lock Seat",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seatNumbers\": [\"A1\", \"A2\"]\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/lock-seat",
+            "description": "Locks seats for 5 minutes. Rate limited (e.g. 5 attempts per minute per user). Use same seatNumbers in create-booking."
+          }
+        },
+        {
+          "name": "Create Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.bookingId) { pm.collectionVariables.set('bookingId', json.bookingId); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seatNumbers\": [\"A1\", \"A2\"]\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/create-booking",
+            "description": "Creates a PENDING booking. Returns bookingId - use it in POST /payments/pay. Seat numbers must match the locked seats."
+          }
+        },
+        {
+          "name": "Book Seat (Legacy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seatNumbers\": [\"A1\", \"A2\"]\n}"
+            },
+            "url": "{{baseUrl}}/events/{{eventId}}/book",
+            "description": "Legacy: confirms booking immediately without payment flow. Locks are released and seats marked BOOKED."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Pay (Success)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/payments/pay",
+            "description": "Simulated payment. Completes booking: CONFIRMED, seats BOOKED, locks released. bookingId from create-booking."
+          }
+        },
+        {
+          "name": "Pay (Simulate Failure)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"simulateFailure\": true\n}"
+            },
+            "url": "{{baseUrl}}/payments/pay",
+            "description": "Simulates payment failure. Locks released, seats back to AVAILABLE, booking status FAILED."
+          }
+        }
+      ]
+    }
+  ]
+}

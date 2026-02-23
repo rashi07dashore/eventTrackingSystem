@@ -9,4 +9,10 @@ public class AppConfig {
     public static String get(String key) {
         return dotenv.get(key);
     }
+
+    /** Get config with default if missing (avoids NPE for optional vars). */
+    public static String get(String key, String defaultValue) {
+        String value = dotenv.get(key);
+        return value != null ? value : defaultValue;
+    }
 }

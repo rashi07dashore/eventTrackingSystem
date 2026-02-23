@@ -14,9 +14,9 @@ public class DatabaseConfig {
     public static MySQLPool createMySQLPool(Vertx vertx) {
 
         MySQLConnectOptions options = new MySQLConnectOptions()
-                .setHost(AppConfig.get("MYSQL_HOST"))
-                .setPort(Integer.parseInt(AppConfig.get("MYSQL_PORT")))
-                .setDatabase(AppConfig.get("MYSQL_DB"))
+                .setHost(AppConfig.get("MYSQL_HOST", "localhost"))
+                .setPort(Integer.parseInt(AppConfig.get("MYSQL_PORT", "3306")))
+                .setDatabase(AppConfig.get("MYSQL_DB", "ticketdb"))
                 .setUser(AppConfig.get("MYSQL_USER"))
                 .setPassword(AppConfig.get("MYSQL_PASSWORD"));
 
@@ -28,8 +28,8 @@ public class DatabaseConfig {
     public static MongoClient createMongoClient(Vertx vertx) {
 
         JsonObject config = new JsonObject()
-                .put("connection_string", AppConfig.get("MONGO_URI"))
-                .put("db_name", AppConfig.get("MONGO_DB"));
+                .put("connection_string", AppConfig.get("MONGO_URI", "mongodb://localhost:27017"))
+                .put("db_name", AppConfig.get("MONGO_DB", "ticketdb"));
 
         return MongoClient.createShared(vertx, config);
     }
@@ -37,7 +37,7 @@ public class DatabaseConfig {
     public static Redis createRedisClient(Vertx vertx) {
 
         RedisOptions options = new RedisOptions()
-                .setConnectionString(AppConfig.get("REDIS_URI"));
+                .setConnectionString(AppConfig.get("REDIS_URI", "redis://localhost:6379"));
 
         return Redis.createClient(vertx, options);
     }

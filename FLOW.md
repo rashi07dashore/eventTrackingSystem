@@ -173,7 +173,7 @@ stateDiagram-v2
     AVAILABLE --> LOCKED: User lock-seat (Redis SET NX EX 300)
     LOCKED --> BOOKED: User pays (Redis DEL, Mongo BOOKED)
     LOCKED --> AVAILABLE: Payment failed (Redis DEL, Mongo AVAILABLE)
-    LOCKED --> AVAILABLE: TTL expired (LockExpiryJob: Redis key gone → Mongo AVAILABLE)
+    LOCKED --> AVAILABLE: TTL expired, job sets seat AVAILABLE
 ```
 
 **Lock expiry job (every 60s):**

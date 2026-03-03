@@ -49,7 +49,7 @@ A backend API for event ticketing: user auth, event listing, seat locking, booki
 - **MongoDB:** Events and seat layout (AVAILABLE / LOCKED / BOOKED).
 - **Redis:** Short-lived seat locks (TTL) and per-user rate limits for lock attempts.
 
-**📐 Design & Architecture Flow** — Detailed documentation of the system design, architecture, and execution flow is available in [flow.md](FLOW.md).
+**📐 Design & Architecture Flow** — Detailed documentation of the system design, architecture, and execution flow is available in [FLOW.md](FLOW.md).
 
 ---
 
